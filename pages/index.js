@@ -4,6 +4,7 @@ export default function Home() {
   const [niche, setNiche] = useState('');
   const [minSubs, setMinSubs] = useState(10000);
   const [maxSubs, setMaxSubs] = useState(200000);
+  const [country, setCountry] = useState('random');
   const [results, setResults] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -26,14 +27,15 @@ export default function Home() {
     setError('');
     setResults([]);
     try {
-      const res = await fetch(`/api/search?niche=${encodeURIComponent(niche)}&minSubs=${minSubs}&maxSubs=${maxSubs}`);
+      const excludeIds = history.map(h => h.id).filter(Boolean).join(',');
+      const res = await fetch(`/api/search?niche=${encodeURIComponent(niche)}&minSubs=${minSubs}&maxSubs=${maxSubs}&country=${country}&excludeIds=${encodeURIComponent(excludeIds)}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResults(data.results);
 
       const existingUrls = new Set(history.map(h => h.url));
       const newOnes = data.results.filter(r => !existingUrls.has(r.url)).map(r => ({
-        ...r, addedAt: new Date().toISOString(), contacted: false, instagram: 'N/A'
+        ...r, addedAt: new Date().toISOString(), contacted: false
       }));
       if (newOnes.length > 0) {
         saveHistory([...newOnes, ...history]);
@@ -50,78 +52,90 @@ export default function Home() {
     saveHistory(updated);
   }
 
-  function updateInstagram(i, value) {
-    const updated = [...history];
-    updated[i].instagram = value;
-    saveHistory(updated);
-  }
-
   function removeHistory(i) {
     const updated = [...history];
     updated.splice(i, 1);
     saveHistory(updated);
   }
 
-  const bg = '#0a0a0f';
-  const card = '#15131f';
-  const border = '#2a2438';
-  const purple = '#a855f7';
-  const purpleDark = '#7c3aed';
-  const textMain = '#f3f1f8';
-  const textMuted = '#8d87a3';
+  const gold = '#c9a86a';
+  const card = '#13121a';
+  const cardBorder = '#262432';
+  const bgMain = '#08070d';
+  const textMain = '#eee9f5';
+  const textMuted = '#75708a';
 
-  const thStyle = { textAlign: 'left', padding: '10px 8px', fontSize: 11, color: textMuted, borderBottom: `1px solid ${border}`, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.05em' };
-  const tdStyle = { padding: '10px 8px', fontSize: 13, borderBottom: `1px solid ${border}`, verticalAlign: 'top', color: textMain };
-  const inputStyle = { padding: 12, borderRadius: 10, border: `1px solid ${border}`, fontSize: 14, background: '#1c1928', color: textMain, outline: 'none' };
+  const thStyle = { textAlign: 'left', padding: '12px 10px', fontSize: 10.5, color: textMuted, borderBottom: `1px solid ${cardBorder}`, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 };
+  const tdStyle = { padding: '13px 10px', fontSize: 13.5, borderBottom: `1px solid ${cardBorder}`, verticalAlign: 'middle', color: textMain };
+  const inputStyle = { padding: '13px 14px', borderRadius: 10, border: `1px solid ${cardBorder}`, fontSize: 14, background: '#0e0d14', color: textMain, outline: 'none' };
+  const selectStyle = { ...inputStyle, width: 140 };
+
+  const countries = [
+    { value: 'random', label: 'Random (Global)' },
+    { value: 'india', label: 'India' },
+    { value: 'usa', label: 'USA' },
+    { value: 'uk', label: 'UK' },
+    { value: 'canada', label: 'Canada' },
+    { value: 'australia', label: 'Australia' }
+  ];
 
   return (
-    <div style={{ minHeight: '100vh', background: bg, fontFamily: '-apple-system, sans-serif' }}>
-      <div style={{ maxWidth: 920, margin: '0 auto', padding: '32px 16px 60px' }}>
+    <div style={{ minHeight: '100vh', background: bgMain, fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '40px 18px 70px' }}>
 
-        <div style={{ marginBottom: 28 }}>
-          <h1 style={{ fontSize: 26, marginBottom: 6, fontWeight: 700, color: textMain, letterSpacing: '-0.02em' }}>
-            Creator <span style={{ color: purple }}>Lead Finder</span>
-          </h1>
-          <p style={{ fontSize: 13, color: textMuted }}>Search YouTube, auto-save leads, track outreach.</p>
+        <div style={{ marginBottom: 32, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: `linear-gradient(135deg, ${gold}, #8a6d3b)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 18, color: '#0a0a0a' }}>C</div>
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 600, color: textMain, letterSpacing: '-0.01em', margin: 0 }}>Creator Lead Finder</h1>
+            <p style={{ fontSize: 12.5, color: textMuted, margin: '2px 0 0' }}>Search YouTube · auto-save leads · track outreach</p>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: card, borderRadius: 12, padding: 4, maxWidth: 340, border: `1px solid ${border}` }}>
-          <button onClick={() => setTab('find')} style={{ flex: 1, padding: 10, border: 'none', borderRadius: 9, background: tab === 'find' ? purple : 'transparent', color: tab === 'find' ? '#fff' : textMuted, fontWeight: 600, fontSize: 14, cursor: 'pointer', transition: 'all 0.15s' }}>Find</button>
-          <button onClick={() => setTab('history')} style={{ flex: 1, padding: 10, border: 'none', borderRadius: 9, background: tab === 'history' ? purple : 'transparent', color: tab === 'history' ? '#fff' : textMuted, fontWeight: 600, fontSize: 14, cursor: 'pointer', transition: 'all 0.15s' }}>History ({history.length})</button>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 28, background: card, borderRadius: 12, padding: 4, maxWidth: 340, border: `1px solid ${cardBorder}` }}>
+          <button onClick={() => setTab('find')} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: 9, background: tab === 'find' ? gold : 'transparent', color: tab === 'find' ? '#0a0a0a' : textMuted, fontWeight: 600, fontSize: 13.5, cursor: 'pointer' }}>Find</button>
+          <button onClick={() => setTab('history')} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: 9, background: tab === 'history' ? gold : 'transparent', color: tab === 'history' ? '#0a0a0a' : textMuted, fontWeight: 600, fontSize: 13.5, cursor: 'pointer' }}>History · {history.length}</button>
         </div>
 
         {tab === 'find' && (
           <div>
-            <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 16, padding: 20, marginBottom: 20 }}>
+            <div style={{ background: card, border: `1px solid ${cardBorder}`, borderRadius: 16, padding: 22, marginBottom: 24 }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
                 <input
                   type="text"
-                  placeholder="Niche e.g. tech reviews, fitness"
+                  placeholder="Niche — e.g. tech reviews, fitness, finance"
                   value={niche}
                   onChange={e => setNiche(e.target.value)}
-                  style={{ ...inputStyle, flex: '1 1 200px' }}
+                  style={{ ...inputStyle, flex: '1 1 220px' }}
                 />
-                <input type="number" value={minSubs} onChange={e => setMinSubs(e.target.value)} placeholder="Min subs" style={{ ...inputStyle, width: 110 }} />
-                <input type="number" value={maxSubs} onChange={e => setMaxSubs(e.target.value)} placeholder="Max subs" style={{ ...inputStyle, width: 110 }} />
+                <select value={country} onChange={e => setCountry(e.target.value)} style={selectStyle}>
+                  {countries.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+                <input type="number" value={minSubs} onChange={e => setMinSubs(e.target.value)} placeholder="Min subs" style={{ ...inputStyle, flex: 1 }} />
+                <input type="number" value={maxSubs} onChange={e => setMaxSubs(e.target.value)} placeholder="Max subs" style={{ ...inputStyle, flex: 1 }} />
               </div>
               <button onClick={searchCreators} disabled={loading} style={{
                 width: '100%', padding: 14, borderRadius: 10, border: 'none',
-                background: loading ? '#4c3a73' : `linear-gradient(135deg, ${purpleDark}, ${purple})`,
-                color: '#fff', fontWeight: 700, fontSize: 15, cursor: loading ? 'default' : 'pointer',
-                boxShadow: loading ? 'none' : '0 4px 20px rgba(168,85,247,0.35)'
+                background: loading ? '#4a4030' : `linear-gradient(135deg, ${gold}, #8a6d3b)`,
+                color: '#0a0a0a', fontWeight: 700, fontSize: 14.5, cursor: loading ? 'default' : 'pointer',
+                letterSpacing: '0.01em'
               }}>
                 {loading ? 'Searching...' : 'Search YouTube'}
               </button>
             </div>
 
-            {error && <div style={{ color: '#fca5a5', marginBottom: 16, fontSize: 13, background: '#3a1212', border: '1px solid #5c1a1a', padding: 12, borderRadius: 10 }}>{error}</div>}
+            {error && <div style={{ color: '#e0a3a3', marginBottom: 16, fontSize: 13, background: '#241313', border: '1px solid #3d1d1d', padding: 12, borderRadius: 10 }}>{error}</div>}
 
             {results.length > 0 && (
-              <p style={{ fontSize: 13, color: '#86efac', marginBottom: 12, fontWeight: 600 }}>● {results.length} channels found — auto-saved to History</p>
+              <p style={{ fontSize: 12.5, color: gold, marginBottom: 14, fontWeight: 600, letterSpacing: '0.02em' }}>{results.length} NEW CHANNELS FOUND — AUTO-SAVED TO HISTORY</p>
+            )}
+            {!loading && results.length === 0 && niche && !error && (
+              <p style={{ fontSize: 12.5, color: textMuted, marginBottom: 14 }}>No new channels found — try a different niche or country, or widen your subscriber range.</p>
             )}
 
             {results.length > 0 && (
-              <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 16, padding: 8, overflowX: 'auto' }}>
+              <div style={{ background: card, border: `1px solid ${cardBorder}`, borderRadius: 16, padding: 6, overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
@@ -129,6 +143,7 @@ export default function Home() {
                       <th style={thStyle}>Category</th>
                       <th style={thStyle}>Subs</th>
                       <th style={thStyle}>Email</th>
+                      <th style={thStyle}>Instagram</th>
                       <th style={thStyle}>Channel</th>
                     </tr>
                   </thead>
@@ -136,10 +151,13 @@ export default function Home() {
                     {results.map(r => (
                       <tr key={r.id}>
                         <td style={{ ...tdStyle, fontWeight: 600 }}>{r.name}</td>
-                        <td style={tdStyle}><span style={{ background: '#2a1f3d', color: '#d4b8ff', padding: '3px 9px', borderRadius: 20, fontSize: 11 }}>{r.category}</span></td>
+                        <td style={tdStyle}><span style={{ background: '#211d2c', color: gold, padding: '4px 11px', borderRadius: 20, fontSize: 11, fontWeight: 500 }}>{r.category}</span></td>
                         <td style={{ ...tdStyle, color: textMuted }}>{r.subs}</td>
-                        <td style={{ ...tdStyle, color: r.email === 'N/A' ? textMuted : '#86efac' }}>{r.email}</td>
-                        <td style={tdStyle}><a href={r.url} target="_blank" rel="noreferrer" style={{ color: purple, textDecoration: 'none' }}>open ↗</a></td>
+                        <td style={{ ...tdStyle, color: r.email === 'N/A' ? textMuted : '#9fd8a8' }}>{r.email}</td>
+                        <td style={{ ...tdStyle, color: r.instagram === 'N/A' ? textMuted : '#9fd8a8' }}>
+                          {r.instagram === 'N/A' ? 'N/A' : <a href={`https://${r.instagram}`} target="_blank" rel="noreferrer" style={{ color: '#9fd8a8', textDecoration: 'none' }}>{r.instagram}</a>}
+                        </td>
+                        <td style={tdStyle}><a href={r.url} target="_blank" rel="noreferrer" style={{ color: gold, textDecoration: 'none', fontWeight: 500 }}>view ↗</a></td>
                       </tr>
                     ))}
                   </tbody>
@@ -151,21 +169,21 @@ export default function Home() {
 
         {tab === 'history' && (
           <div>
-            <div style={{ display: 'flex', gap: 12, marginBottom: 20, maxWidth: 420 }}>
-              <div style={{ flex: 1, background: card, border: `1px solid ${border}`, borderRadius: 12, padding: 16, textAlign: 'center' }}>
-                <div style={{ fontSize: 24, fontWeight: 700, color: purple }}>{history.length}</div>
-                <div style={{ fontSize: 12, color: textMuted, marginTop: 2 }}>Total leads</div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 24, maxWidth: 440 }}>
+              <div style={{ flex: 1, background: card, border: `1px solid ${cardBorder}`, borderRadius: 14, padding: 18, textAlign: 'center' }}>
+                <div style={{ fontSize: 26, fontWeight: 700, color: gold }}>{history.length}</div>
+                <div style={{ fontSize: 11.5, color: textMuted, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total leads</div>
               </div>
-              <div style={{ flex: 1, background: card, border: `1px solid ${border}`, borderRadius: 12, padding: 16, textAlign: 'center' }}>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#86efac' }}>{history.filter(h => h.contacted).length}</div>
-                <div style={{ fontSize: 12, color: textMuted, marginTop: 2 }}>Contacted</div>
+              <div style={{ flex: 1, background: card, border: `1px solid ${cardBorder}`, borderRadius: 14, padding: 18, textAlign: 'center' }}>
+                <div style={{ fontSize: 26, fontWeight: 700, color: '#9fd8a8' }}>{history.filter(h => h.contacted).length}</div>
+                <div style={{ fontSize: 11.5, color: textMuted, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Contacted</div>
               </div>
             </div>
 
-            {history.length === 0 && <div style={{ textAlign: 'center', color: textMuted, padding: 40, background: card, borderRadius: 16, border: `1px solid ${border}` }}>No leads yet. Search in the Find tab — results save here automatically.</div>}
+            {history.length === 0 && <div style={{ textAlign: 'center', color: textMuted, padding: 50, background: card, borderRadius: 16, border: `1px solid ${cardBorder}`, fontSize: 13.5 }}>No leads yet. Search in the Find tab — results save here automatically.</div>}
 
             {history.length > 0 && (
-              <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 16, padding: 8, overflowX: 'auto' }}>
+              <div style={{ background: card, border: `1px solid ${cardBorder}`, borderRadius: 16, padding: 6, overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
@@ -181,22 +199,16 @@ export default function Home() {
                     {history.map((h, i) => (
                       <tr key={i}>
                         <td style={{ ...tdStyle, fontWeight: 600 }}>{h.name}</td>
-                        <td style={tdStyle}><span style={{ background: '#2a1f3d', color: '#d4b8ff', padding: '3px 9px', borderRadius: 20, fontSize: 11 }}>{h.category}</span></td>
-                        <td style={tdStyle}>
-                          <input
-                            type="text"
-                            placeholder="paste handle"
-                            value={h.instagram === 'N/A' ? '' : h.instagram}
-                            onChange={e => updateInstagram(i, e.target.value || 'N/A')}
-                            style={{ width: 100, padding: 6, fontSize: 12, border: `1px solid ${border}`, borderRadius: 8, background: '#1c1928', color: textMain, outline: 'none' }}
-                          />
+                        <td style={tdStyle}><span style={{ background: '#211d2c', color: gold, padding: '4px 11px', borderRadius: 20, fontSize: 11, fontWeight: 500 }}>{h.category}</span></td>
+                        <td style={{ ...tdStyle, color: h.instagram === 'N/A' ? textMuted : '#9fd8a8' }}>
+                          {h.instagram === 'N/A' ? 'N/A' : <a href={`https://${h.instagram}`} target="_blank" rel="noreferrer" style={{ color: '#9fd8a8', textDecoration: 'none' }}>{h.instagram}</a>}
                         </td>
-                        <td style={{ ...tdStyle, color: h.email === 'N/A' ? textMuted : '#86efac' }}>{h.email}</td>
+                        <td style={{ ...tdStyle, color: h.email === 'N/A' ? textMuted : '#9fd8a8' }}>{h.email}</td>
                         <td style={tdStyle}>
-                          <input type="checkbox" checked={h.contacted} onChange={() => toggleContacted(i)} style={{ width: 16, height: 16, accentColor: purple }} />
+                          <input type="checkbox" checked={h.contacted} onChange={() => toggleContacted(i)} style={{ width: 17, height: 17, accentColor: gold }} />
                         </td>
                         <td style={tdStyle}>
-                          <button onClick={() => removeHistory(i)} style={{ border: 'none', background: 'transparent', color: '#f87171', fontSize: 18, cursor: 'pointer' }}>×</button>
+                          <button onClick={() => removeHistory(i)} style={{ border: 'none', background: 'transparent', color: '#d98787', fontSize: 19, cursor: 'pointer' }}>×</button>
                         </td>
                       </tr>
                     ))}
@@ -209,4 +221,4 @@ export default function Home() {
       </div>
     </div>
   );
-    }
+  }
